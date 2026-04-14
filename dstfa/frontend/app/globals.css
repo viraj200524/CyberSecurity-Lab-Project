@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+:root {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #0f1629;
+  --bg-tertiary: #1a2340;
+  --accent-primary: #00d4ff;
+  --accent-secondary: #7b61ff;
+  --success: #00ff88;
+  --warning: #ffb800;
+  --danger: #ff3860;
+  --text-primary: #e8eaf0;
+  --text-muted: #6b7a99;
+  --border: #1e2d4a;
+  --terminal-bg: #060b15;
+  --terminal-text: #00ff88;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.12;
+  background-image: linear-gradient(90deg, rgba(0, 212, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(rgba(0, 212, 255, 0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+  z-index: 0;
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+details > summary {
+  list-style: none;
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+@theme inline {
+  --font-sans: var(--font-ibm);
+  --font-mono: var(--font-jetbrains);
+}

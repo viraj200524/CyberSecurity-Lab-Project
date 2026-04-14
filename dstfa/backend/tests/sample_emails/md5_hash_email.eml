@@ -1,0 +1,10 @@
+From: lab@dstfa.local
+To: student@vjti.local
+Subject: MD5 reference sample
+Date: Tue, 14 Apr 2026 12:00:00 +0000
+Message-ID: <md5-sample@dstfa.local>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+This sample email mentions MD5 for syllabus linkage and later hash / collision demos.
+The message body is arbitrary plaintext.
