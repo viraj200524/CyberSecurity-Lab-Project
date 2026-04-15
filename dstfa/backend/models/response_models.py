@@ -7,6 +7,19 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 
+class SampleListItem(BaseModel):
+    """One entry in `GET /api/samples` (PRD §8.1)."""
+
+    id: str = ""
+    label: str = ""
+    description: str = ""
+    highlights: list[str] = Field(default_factory=list)
+
+
+class SamplesListResponse(BaseModel):
+    samples: list[SampleListItem] = Field(default_factory=list)
+
+
 class ParsedHeader(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -169,12 +182,40 @@ class TrustChainResult(BaseModel):
     summary: str = ""
 
 
+class CollisionPair(BaseModel):
+    message_1_hex: str = ""
+    message_2_hex: str = ""
+    shared_md5: str = ""
+
+
+class VulnerabilityLLMExplanation(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    why_md5_fails: str = ""
+    merkle_damgard_failure_point: str = ""
+    step_by_step: list[str] = Field(default_factory=list)
+    why_sha256_resists: str = ""
+    syllabus_note: str = ""
+
+
+class VulnerabilityResponse(BaseModel):
+    demo_type: str = "collision"
+    generated_script: str = ""
+    execution_output: str = ""
+    execution_success: bool = False
+    execution_time_ms: int = 0
+    collision_pair: CollisionPair = Field(default_factory=CollisionPair)
+    llm_explanation: VulnerabilityLLMExplanation = Field(default_factory=VulnerabilityLLMExplanation)
+
+
 class LLMInsights(BaseModel):
     model_config = ConfigDict(extra="ignore", protected_namespaces=())
 
     model_used: str = ""
     timestamp: str = ""
     forensic_summary: str = ""
+    key_findings: list[str] = Field(default_factory=list)
+    threat_justification: str = ""
     entity_extraction: dict[str, Any] = Field(default_factory=dict)
     attack_vectors_detected: list[str] = Field(default_factory=list)
     threat_level: str = "low"
@@ -194,5 +235,6 @@ class AnalysisResult(BaseModel):
     hashes: HashResult = Field(default_factory=HashResult)
     digital_signatures: SignaturesResult = Field(default_factory=SignaturesResult)
     trust_chain: TrustChainResult = Field(default_factory=TrustChainResult)
-    llm_insights: LLMInsights = Field(default_factory=LLMInsights)
+    llm_insights: LLMInsights | None = None
+    llm_error: str | None = None
     vulnerability_available: bool = False

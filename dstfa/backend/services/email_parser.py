@@ -45,10 +45,31 @@ def _strip_html(html: str) -> str:
 
 
 def _looks_like_eml(raw: bytes) -> bool:
+    """Detect RFC822 / mbox; minimal fixtures may omit Content-Type if they have common headers."""
     if raw.lstrip().startswith(b"From "):
         return True
     head = raw[:8192].lower()
-    return b"content-type:" in head or b"message-id:" in head or b"received:" in head
+    if b"content-type:" in head or b"message-id:" in head or b"received:" in head:
+        return True
+    try:
+        preview = raw[:4096].decode("utf-8", errors="replace")
+    except Exception:
+        return False
+    lines = [ln.strip().lower() for ln in preview.splitlines()[:16] if ln.strip()]
+    if len(lines) < 2:
+        return False
+    headerish = (
+        "from:",
+        "to:",
+        "subject:",
+        "date:",
+        "reply-to:",
+        "cc:",
+        "bcc:",
+        "mime-version:",
+    )
+    hits = sum(1 for ln in lines[:10] if any(ln.startswith(p) for p in headerish))
+    return hits >= 2
 
 
 def _split_headers_body(raw: bytes) -> tuple[bytes, bytes]:
@@ -236,6 +257,31 @@ def _extract_attachments(msg: Message) -> list[dict[str, Any]]:
 
 
 def _parse_eml(raw: bytes) -> dict[str, Any]:
+    mp_plain = ""
+    mp_extra_atts: list[dict[str, Any]] = []
+    try:
+        import mailparser
+
+        mp = mailparser.parse_from_bytes(raw)
+        if mp.text_plain:
+            mp_plain = str(mp.text_plain).strip()
+        for a in mp.attachments or []:
+            if not isinstance(a, dict):
+                continue
+            raw_b = a.get("binary")
+            if not isinstance(raw_b, bytes):
+                raw_b = b""
+            mp_extra_atts.append(
+                {
+                    "filename": str(a.get("filename") or "unnamed"),
+                    "content_type": str(a.get("mail_content_type") or "application/octet-stream"),
+                    "size_bytes": len(raw_b),
+                    "raw_bytes": raw_b,
+                }
+            )
+    except Exception:
+        pass
+
     msg = message_from_bytes(raw, policy=email.policy.default)
     header_bytes, _ = _split_headers_body(raw)
     pairs = _parse_raw_header_pairs(header_bytes)
@@ -258,7 +304,11 @@ def _parse_eml(raw: bytes) -> dict[str, Any]:
     }
 
     body, _html = _extract_body(msg)
+    if not body and mp_plain:
+        body = mp_plain
     attachments = _extract_attachments(msg)
+    if not attachments and mp_extra_atts:
+        attachments = list(mp_extra_atts)
 
     raw_header_text = header_bytes.decode("utf-8", errors="replace")
 

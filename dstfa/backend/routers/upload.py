@@ -8,7 +8,8 @@ from pathlib import Path
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile, status
 
 from config import settings
-from models.request_models import RawHeadersUpload, SampleMeta, UploadResponse
+from models.request_models import RawHeadersUpload, UploadResponse
+from models.response_models import SampleListItem, SamplesListResponse
 from services.email_parser import build_minimal_eml_from_headers, parse_email
 from storage import upload_store
 
@@ -16,12 +17,31 @@ router = APIRouter(tags=["upload"])
 
 SAMPLES_DIR = Path(__file__).resolve().parents[1] / "tests" / "sample_emails"
 
-SAMPLE_TITLES: dict[str, tuple[str, str]] = {
-    "dkim_valid": ("DKIM-signed sample", "Synthetic message with DKIM-Signature header."),
-    "pgp_signed": ("PGP-signed sample", "Multipart message referencing PGP-style signing."),
-    "md5_hash_email": ("MD5 / weak hash sample", "Message body referencing MD5 for lab demos."),
-    "phishing_sample": ("Phishing-style sample", "Reply-To domain mismatch for suspicious header demo."),
+# PRD §8.1 — gallery metadata (id matches filename stem).
+SAMPLE_CATALOG: dict[str, dict[str, str | list[str]]] = {
+    "dkim_valid": {
+        "label": "Valid DKIM Email",
+        "description": "Synthetic message with a DKIM-Signature header for authentication demos.",
+        "highlights": ["DKIM", "SPF"],
+    },
+    "pgp_signed": {
+        "label": "PGP Signed Email",
+        "description": "Multipart/signed structure with a placeholder OpenPGP signature block.",
+        "highlights": ["PGP", "DSA"],
+    },
+    "md5_phishing": {
+        "label": "MD5 Hash — Vulnerable",
+        "description": "Body references MD5 for weak-hash demos; Reply-To domain mismatches From for phishing heuristics.",
+        "highlights": ["MD5", "Collision Demo"],
+    },
+    "smime_chain": {
+        "label": "S/MIME Certificate Chain",
+        "description": "Synthetic PKCS#7 / multipart/signed layout for S/MIME chain-of-trust labs (later-phase verification).",
+        "highlights": ["S/MIME", "X.509"],
+    },
 }
+
+SAMPLE_ORDER = ("dkim_valid", "pgp_signed", "md5_phishing", "smime_chain")
 
 
 def _max_bytes() -> int:
@@ -89,16 +109,23 @@ async def upload_email(
     return _ingest_bytes(raw, file.filename)
 
 
-@router.get("/samples", response_model=list[SampleMeta])
-def list_samples() -> list[SampleMeta]:
+def _sample_list_item(sid: str) -> SampleListItem:
+    meta = SAMPLE_CATALOG.get(sid, {})
+    label = str(meta.get("label", sid.replace("_", " ").title()))
+    desc = str(meta.get("description", ""))
+    hl = meta.get("highlights", [])
+    highlights = [str(x) for x in hl] if isinstance(hl, list) else []
+    return SampleListItem(id=sid, label=label, description=desc, highlights=highlights)
+
+
+@router.get("/samples", response_model=SamplesListResponse)
+def list_samples() -> SamplesListResponse:
     if not SAMPLES_DIR.is_dir():
-        return []
-    out: list[SampleMeta] = []
-    for p in sorted(SAMPLES_DIR.glob("*.eml")):
-        sid = p.stem
-        title, desc = SAMPLE_TITLES.get(sid, (sid.replace("_", " ").title(), ""))
-        out.append(SampleMeta(id=sid, filename=p.name, title=title, description=desc))
-    return out
+        return SamplesListResponse(samples=[])
+    stems = {p.stem for p in SAMPLES_DIR.glob("*.eml")}
+    ordered = [s for s in SAMPLE_ORDER if s in stems]
+    ordered += sorted(s for s in stems if s not in SAMPLE_ORDER)
+    return SamplesListResponse(samples=[_sample_list_item(sid) for sid in ordered])
 
 
 @router.get("/samples/{sample_id}", response_model=UploadResponse)

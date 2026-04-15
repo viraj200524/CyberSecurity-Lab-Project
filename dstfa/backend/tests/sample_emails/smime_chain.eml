@@ -1,0 +1,20 @@
+From: signer@dstfa.local
+To: recipient@dstfa.local
+Subject: S/MIME chain sample (synthetic)
+Date: Tue, 14 Apr 2026 12:00:00 +0000
+Message-ID: <smime-chain@dstfa.local>
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha-256; boundary="smime-b1"
+
+--smime-b1
+Content-Type: text/plain; charset=utf-8
+
+Synthetic S/MIME multipart for certificate-chain labs. PKCS#7 verification is implemented in a later phase.
+
+--smime-b1
+Content-Type: application/pkcs7-signature; name="smime.p7s"
+Content-Transfer-Encoding: base64
+
+SGVsbG8=
+
+--smime-b1--

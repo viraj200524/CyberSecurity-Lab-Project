@@ -1,5 +1,5 @@
 import { api } from "./api";
-import type { SampleMeta, UploadResponse } from "./types";
+import type { SampleItem, SamplesListResponse, UploadResponse } from "./types";
 
 export async function uploadViaFile(file: File): Promise<UploadResponse> {
   const fd = new FormData();
@@ -13,9 +13,9 @@ export async function uploadViaRawHeaders(raw_headers: string): Promise<UploadRe
   return data;
 }
 
-export async function listSamples(): Promise<SampleMeta[]> {
-  const { data } = await api.get<SampleMeta[]>("/samples");
-  return data;
+export async function listSamples(): Promise<SampleItem[]> {
+  const { data } = await api.get<SamplesListResponse>("/samples");
+  return data.samples;
 }
 
 export async function loadSample(sampleId: string): Promise<UploadResponse> {

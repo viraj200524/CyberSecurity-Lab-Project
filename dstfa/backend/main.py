@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
-from routers import analyze, upload
+from routers import analyze, upload, vulnerability
 
 app = FastAPI(title="DSTFA API", version="2.0")
 
@@ -17,6 +17,7 @@ app.add_middleware(
 
 app.include_router(upload.router, prefix="/api")
 app.include_router(analyze.router, prefix="/api")
+app.include_router(vulnerability.router, prefix="/api")
 
 
 @app.get("/api/health")

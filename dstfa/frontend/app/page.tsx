@@ -8,12 +8,12 @@ import { toast } from "sonner";
 import { PasteHeaders } from "@/components/upload/PasteHeaders";
 import { UploadDropzone } from "@/components/upload/UploadDropzone";
 import { listSamples, loadSample } from "@/lib/uploadApi";
-import type { SampleMeta } from "@/lib/types";
+import type { SampleItem } from "@/lib/types";
 
 export default function Home() {
   const router = useRouter();
   const [mode, setMode] = useState<"file" | "paste">("file");
-  const [samples, setSamples] = useState<SampleMeta[]>([]);
+  const [samples, setSamples] = useState<SampleItem[]>([]);
 
   useEffect(() => {
     listSamples()
@@ -21,8 +21,9 @@ export default function Home() {
       .catch(() => toast.error("Could not load sample list from API."));
   }, []);
 
-  const go = (uploadId: string) => {
-    router.push(`/analysis/${uploadId}`);
+  const go = (uploadId: string, sampleId?: string) => {
+    const q = sampleId ? `?sample=${encodeURIComponent(sampleId)}` : "";
+    router.push(`/analysis/${uploadId}${q}`);
   };
 
   return (
@@ -100,15 +101,20 @@ export default function Home() {
               onClick={async () => {
                 try {
                   const res = await loadSample(s.id);
-                  go(res.upload_id);
+                  go(res.upload_id, s.id);
                 } catch {
                   toast.error("Failed to load sample.");
                 }
               }}
               className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 text-left transition hover:border-[var(--accent-primary)] hover:shadow-[0_0_20px_rgba(0,212,255,0.08)]"
             >
-              <p className="font-[family-name:var(--font-space)] text-sm text-[var(--accent-primary)]">{s.title}</p>
+              <p className="font-[family-name:var(--font-space)] text-sm text-[var(--accent-primary)]">{s.label}</p>
               <p className="mt-1 text-xs text-[var(--text-muted)]">{s.description}</p>
+              {s.highlights.length > 0 && (
+                <p className="mt-2 text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
+                  {s.highlights.join(" · ")}
+                </p>
+              )}
             </button>
           ))}
         </div>

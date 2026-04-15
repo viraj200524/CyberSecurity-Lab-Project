@@ -1,0 +1,11 @@
+From: CEO <ceo@company-legit.com>
+Reply-To: payments@evil-login.net
+To: finance@company-legit.com
+Subject: URGENT: MD5-weighted phishing lab sample
+Date: Tue, 14 Apr 2026 12:00:00 +0000
+Message-ID: <md5-phishing@dstfa.local>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Synthetic sample: body references MD5 for weak-hash / collision demos, while Reply-To
+does not match From for suspicious-header heuristics (Phase 1).

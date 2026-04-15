@@ -1,6 +1,6 @@
 """API request bodies (Phase 1+)."""
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -16,6 +16,11 @@ class AnalyzeRequest(BaseModel):
     options: AnalyzeOptions = Field(default_factory=AnalyzeOptions)
 
 
+class VulnerabilityRunRequest(BaseModel):
+    analysis_id: str
+    demo_type: Literal["collision", "length_extension"] = "collision"
+
+
 class RawHeadersUpload(BaseModel):
     raw_headers: str = ""
 
@@ -28,10 +33,3 @@ class UploadResponse(BaseModel):
     size_bytes: int = 0
     detected_type: str = ""
     preview: dict[str, Any] = Field(default_factory=dict)
-
-
-class SampleMeta(BaseModel):
-    id: str = ""
-    filename: str = ""
-    title: str = ""
-    description: str = ""

@@ -38,7 +38,8 @@ export interface AnalysisResult {
   hashes?: Record<string, unknown>;
   digital_signatures?: Record<string, unknown>;
   trust_chain?: Record<string, unknown>;
-  llm_insights?: Record<string, unknown>;
+  llm_insights?: Record<string, unknown> | null;
+  llm_error?: string | null;
   vulnerability_available: boolean;
 }
 
@@ -55,11 +56,16 @@ export interface UploadResponse {
   };
 }
 
-export interface SampleMeta {
+/** `GET /api/samples` item (PRD §8.1). */
+export interface SampleItem {
   id: string;
-  filename: string;
-  title: string;
+  label: string;
   description: string;
+  highlights: string[];
+}
+
+export interface SamplesListResponse {
+  samples: SampleItem[];
 }
 
 export interface VulnerabilityResult {
