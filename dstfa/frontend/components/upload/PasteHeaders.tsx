@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import axios from "axios";
+import { toast } from "sonner";
 
 const PLACEHOLDER = `Received: from mail.example.com (mail.example.com [192.0.2.1])
 \tby mx.dstfa.local with ESMTPS id abc123
@@ -31,8 +33,17 @@ export function PasteHeaders({ onUploaded, disabled }: Props) {
       const res = await uploadViaRawHeaders(text || PLACEHOLDER);
       onUploaded(res.upload_id);
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Upload failed";
-      setError(msg);
+      if (axios.isAxiosError(e)) {
+        const st = e.response?.status;
+        const detail = (e.response?.data as { detail?: string } | undefined)?.detail;
+        if (st === 400 || st === 413) toast.warning(detail || "Could not accept pasted headers.");
+        else if (!e.response) toast.error("Network error during upload.");
+        else toast.error(detail || "Upload failed.");
+        setError(detail || "Upload failed");
+      } else {
+        const msg = e instanceof Error ? e.message : "Upload failed";
+        setError(msg);
+      }
     } finally {
       setBusy(false);
     }

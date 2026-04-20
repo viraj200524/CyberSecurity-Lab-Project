@@ -140,7 +140,7 @@ def _sig_meta(sig: PGPSignature, out: dict[str, Any]) -> None:
                 out["signature_date"] = str(ct)
     except Exception:
         pass
-    # DSA (r,s) — Unit 6 teaching block (parsed by SignatureTab)
+    # DSA (r,s) hex block (parsed by SignatureTab)
     try:
         pkt = getattr(sig, "__sig__", None)
         inner = getattr(pkt, "signature", None) if pkt is not None else None

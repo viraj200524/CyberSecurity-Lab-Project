@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 
 class SampleListItem(BaseModel):
@@ -195,7 +195,10 @@ class VulnerabilityLLMExplanation(BaseModel):
     merkle_damgard_failure_point: str = ""
     step_by_step: list[str] = Field(default_factory=list)
     why_sha256_resists: str = ""
-    syllabus_note: str = ""
+    concept_note: str = Field(
+        default="",
+        validation_alias=AliasChoices("concept_note", "syllabus_note"),
+    )
 
 
 class VulnerabilityResponse(BaseModel):
@@ -219,7 +222,10 @@ class LLMInsights(BaseModel):
     entity_extraction: dict[str, Any] = Field(default_factory=dict)
     attack_vectors_detected: list[str] = Field(default_factory=list)
     threat_level: str = "low"
-    syllabus_links: list[dict[str, Any]] = Field(default_factory=list)
+    concept_links: list[dict[str, Any]] = Field(
+        default_factory=list,
+        validation_alias=AliasChoices("concept_links", "syllabus_links"),
+    )
     timeline_reconstruction: list[dict[str, Any]] = Field(default_factory=list)
     chain_of_custody_log: dict[str, Any] = Field(default_factory=dict)
 

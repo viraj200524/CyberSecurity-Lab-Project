@@ -2,12 +2,13 @@
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AnalyzeOptions(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
     run_llm: bool = False
-    syllabus_mode: bool = False
     run_vulnerability_check: bool = False
 
 
@@ -33,3 +34,9 @@ class UploadResponse(BaseModel):
     size_bytes: int = 0
     detected_type: str = ""
     preview: dict[str, Any] = Field(default_factory=dict)
+
+
+class ExportRequest(BaseModel):
+    """Body for POST /api/export/pdf and /api/export/json (Phase 7)."""
+
+    analysis_id: str = Field(min_length=1)

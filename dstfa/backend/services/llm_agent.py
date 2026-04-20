@@ -1,4 +1,4 @@
-"""Gemini 2.0 Flash forensic agent (DSTFA Phase 5)."""
+"""Groq LLM forensic agent (OpenAI-compatible chat completions)."""
 
 from __future__ import annotations
 
@@ -17,11 +17,9 @@ logger = logging.getLogger(__name__)
 SYSTEM_PROMPT = """You are a professional email forensics analyst and cybersecurity educator.
 You analyze structured forensic data and produce clear, accurate explanations.
 You always base your explanations strictly on the evidence provided — never hallucinate.
-You map findings to cryptography concepts from two syllabus units:
-- Unit 4: Hash Functions (SHA-256, MD5, Merkle-Damgård construction, HMAC, length-extension attacks)
-- Unit 6: Digital Signatures (DSA, PGP/OpenPGP, S/MIME, X.509 certificate chains, chain of trust)
-
-When syllabus_mode is True, add [Unit 4] or [Unit 6] tags inline next to each relevant concept."""
+Where relevant, tie findings to cryptography topics (hash functions and Merkle–Damgård, email authentication,
+digital signatures, PGP/OpenPGP, S/MIME, X.509 and chain of trust) using plain language — do not refer to
+course syllabi, "units", or academic module labels."""
 
 USER_PROMPT_TEMPLATE = """Analyze this email forensic data and provide:
 
@@ -43,10 +41,10 @@ USER_PROMPT_TEMPLATE = """Analyze this email forensic data and provide:
 
 5. ATTACK VECTORS: List any detected attack patterns (e.g., header spoofing, DKIM bypass, phishing indicators).
 
-6. SYLLABUS CONNECTIONS: For each cryptographic element found, explain:
-- What concept it demonstrates (e.g., "DKIM uses RSA-SHA256 digital signature")
-- Which unit it belongs to
-- Why it matters for security
+6. CRYPTO CONCEPT LINKS: For each relevant cryptographic idea (from the evidence), provide:
+- concept: short name (e.g. "DKIM domain alignment")
+- explanation: why it matters for this message
+- evidence_field: optional pointer to the JSON field or header you relied on
 
 7. TIMELINE: Reconstruct the email's journey from the Received headers in chronological order.
 
@@ -62,8 +60,8 @@ Respond with valid JSON matching this structure:
   "threat_level": "low|medium|high|critical",
   "threat_justification": "string",
   "attack_vectors_detected": ["string"],
-  "syllabus_links": [
-    {{ "concept": "string", "unit": "string", "explanation": "string", "evidence_field": "string" }}
+  "concept_links": [
+    {{ "concept": "string", "explanation": "string", "evidence_field": "string" }}
   ],
   "timeline_reconstruction": [
     {{ "timestamp": "ISO8601", "event": "string", "source": "string" }}
@@ -72,8 +70,7 @@ Respond with valid JSON matching this structure:
 
 
 VULN_SYSTEM_PROMPT = """You are a cryptography professor explaining the Merkle-Damgård construction weakness to an advanced undergraduate student.
-Be technically precise but clear. Use the actual hash values from the email as evidence for your explanation.
-Always tie your explanation back to Unit 4 syllabus concepts."""
+Be technically precise but clear. Use the actual hash values from the email as evidence for your explanation."""
 
 VULN_USER_TEMPLATE = """The email we analyzed uses MD5 for its message hash.
 MD5 hash of the email body: {md5_hash}
@@ -92,7 +89,7 @@ Provide a technical explanation in JSON:
     "Step 3: ..."
   ],
   "why_sha256_resists": "how SHA-256 mitigates this despite also using Merkle-Damgård",
-  "syllabus_note": "direct connection to Unit 4 hash function theory"
+  "concept_note": "one short paragraph tying the demo to hash-function collision resistance (no course or syllabus wording)"
 }}"""
 
 
@@ -116,20 +113,25 @@ def extract_json_object(text: str) -> dict[str, Any]:
     return json.loads(s)
 
 
-def call_gemini(system_prompt: str, user_prompt: str) -> str:
-    import google.generativeai as genai
+def call_groq(system_prompt: str, user_prompt: str) -> str:
+    from groq import Groq
 
-    if not (settings.GEMINI_API_KEY or "").strip():
-        raise ValueError("GEMINI_API_KEY is not configured")
-    genai.configure(api_key=settings.GEMINI_API_KEY)
-    model = genai.GenerativeModel(
-        model_name="gemini-2.0-flash",
-        system_instruction=system_prompt,
+    if not (settings.GROQ_API_KEY or "").strip():
+        raise ValueError("GROQ_API_KEY is not configured")
+    model = (settings.GROQ_MODEL or "llama-3.3-70b-versatile").strip()
+    client = Groq(api_key=settings.GROQ_API_KEY)
+    completion = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        temperature=0.2,
     )
-    response = model.generate_content(user_prompt)
-    text = (response.text or "").strip()
+    choice = completion.choices[0].message
+    text = (choice.content or "").strip()
     if not text:
-        raise ValueError("Empty response from Gemini")
+        raise ValueError("Empty response from Groq")
     return text
 
 
@@ -138,21 +140,18 @@ def _normalize_threat(raw: str) -> str:
     return t if t in ("low", "medium", "high", "critical") else "low"
 
 
-def generate_forensic_explanation(analysis_partial: dict[str, Any], syllabus_mode: bool) -> LLMInsights:
+def generate_forensic_explanation(analysis_partial: dict[str, Any]) -> LLMInsights:
     """
-    Build forensic JSON payload from non-LLM analysis fields, call Gemini, return ``LLMInsights``.
+    Build forensic JSON payload from non-LLM analysis fields, call Groq, return ``LLMInsights``.
     """
-    system = SYSTEM_PROMPT
-    if syllabus_mode:
-        system += "\nThe operator enabled syllabus_mode: include [Unit 4] / [Unit 6] tags inline in the forensic_summary and syllabus_links text where appropriate."
-
     forensic_json = json.dumps(analysis_partial, indent=2, default=str)
     user = USER_PROMPT_TEMPLATE.format(forensic_data_json=forensic_json)
-    prompt_for_hash = f"{system}\n\n{user}"
+    prompt_for_hash = f"{SYSTEM_PROMPT}\n\n{user}"
     prompt_hash = hashlib.sha256(prompt_for_hash.encode("utf-8")).hexdigest()
     now = datetime.now(timezone.utc).isoformat()
+    model_id = (settings.GROQ_MODEL or "llama-3.3-70b-versatile").strip()
 
-    raw = call_gemini(system, user)
+    raw = call_groq(SYSTEM_PROMPT, user)
     try:
         data = extract_json_object(raw)
     except (json.JSONDecodeError, ValueError) as e:
@@ -161,7 +160,7 @@ def generate_forensic_explanation(analysis_partial: dict[str, Any], syllabus_mod
             "Respond with ONLY valid raw JSON matching the schema from the prior instruction. "
             "No markdown fences, no commentary before or after the JSON.\n\n" + user
         )
-        raw2 = call_gemini(system, retry_user)
+        raw2 = call_groq(SYSTEM_PROMPT, retry_user)
         data = extract_json_object(raw2)
         raw = raw2
 
@@ -179,9 +178,10 @@ def generate_forensic_explanation(analysis_partial: dict[str, Any], syllabus_mod
         attack_vectors = []
     attack_vectors = [str(x) for x in attack_vectors]
 
-    syllabus_links = data.get("syllabus_links") or []
-    if not isinstance(syllabus_links, list):
-        syllabus_links = []
+    raw_links = data.get("concept_links") or data.get("syllabus_links") or []
+    if not isinstance(raw_links, list):
+        raw_links = []
+    concept_links: list[dict[str, Any]] = [x for x in raw_links if isinstance(x, dict)]
 
     timeline = data.get("timeline_reconstruction") or []
     if not isinstance(timeline, list):
@@ -190,7 +190,7 @@ def generate_forensic_explanation(analysis_partial: dict[str, Any], syllabus_mod
     threat_justification = str(data.get("threat_justification", "") or "")
 
     return LLMInsights(
-        model_used="gemini-2.0-flash",
+        model_used=model_id,
         timestamp=now,
         forensic_summary=str(data.get("forensic_summary", "") or ""),
         key_findings=key_findings,
@@ -198,11 +198,12 @@ def generate_forensic_explanation(analysis_partial: dict[str, Any], syllabus_mod
         entity_extraction=entities,
         attack_vectors_detected=attack_vectors,
         threat_level=_normalize_threat(str(data.get("threat_level", "low"))),
-        syllabus_links=syllabus_links,
+        concept_links=concept_links,
         timeline_reconstruction=timeline,
         chain_of_custody_log={
             "prompt_hash": prompt_hash,
-            "model": "gemini-2.0-flash",
+            "model": model_id,
+            "provider": "groq",
             "timestamp": now,
             "response_length": len(raw),
             "confidence_note": (threat_justification[:500] if threat_justification else "")
@@ -212,11 +213,11 @@ def generate_forensic_explanation(analysis_partial: dict[str, Any], syllabus_mod
 
 
 def generate_vulnerability_explanation(md5_hash: str, m1_hex: str, m2_hex: str, shared_md5: str) -> dict[str, Any]:
-    """Phase 6 helper — MD5 collision narrative from Gemini (JSON)."""
+    """Phase 6 helper — MD5 collision narrative from Groq (JSON)."""
     user = VULN_USER_TEMPLATE.format(md5_hash=md5_hash, m1_hex=m1_hex, m2_hex=m2_hex, shared_md5=shared_md5)
-    raw = call_gemini(VULN_SYSTEM_PROMPT, user)
+    raw = call_groq(VULN_SYSTEM_PROMPT, user)
     try:
         return extract_json_object(raw)
     except (json.JSONDecodeError, ValueError):
-        raw2 = call_gemini(VULN_SYSTEM_PROMPT, "Return ONLY raw JSON, no markdown:\n" + user)
+        raw2 = call_groq(VULN_SYSTEM_PROMPT, "Return ONLY raw JSON, no markdown:\n" + user)
         return extract_json_object(raw2)

@@ -84,6 +84,8 @@ export interface VulnerabilityResult {
     merkle_damgard_failure_point: string;
     step_by_step: string[];
     why_sha256_resists: string;
-    syllabus_note: string;
+    concept_note: string;
+    /** @deprecated API may still return this key from older runs */
+    syllabus_note?: string;
   };
 }

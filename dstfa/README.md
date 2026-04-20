@@ -17,7 +17,7 @@ DSTFA is a cyber-forensics lab project that analyzes email authenticity, hashing
    - `pip install -r requirements.txt`
 4. Configure environment:
    - Copy `.env.example` to `.env`
-   - Fill `GEMINI_API_KEY`
+   - Fill `GROQ_API_KEY` (and optionally `GROQ_MODEL`)
 5. Run API:
    - `uvicorn main:app --reload --port 8000`
 
@@ -35,7 +35,8 @@ DSTFA is a cyber-forensics lab project that analyzes email authenticity, hashing
 
 ### Backend (`backend/.env`)
 
-- `GEMINI_API_KEY` (optional until Phase 5 LLM; may be empty for Phase 1–4)
+- `GROQ_API_KEY` (optional until LLM features; may be empty without AI tab)
+- `GROQ_MODEL` (defaults to `llama-3.3-70b-versatile`; see Groq docs for current model ids)
 - `APP_ENV`
 - `ALLOWED_ORIGINS`
 - `MAX_FILE_SIZE_MB`

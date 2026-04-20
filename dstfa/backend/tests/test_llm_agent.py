@@ -1,4 +1,4 @@
-"""Unit tests for LLM JSON parsing (no live Gemini calls)."""
+"""Unit tests for LLM JSON parsing (no live Groq calls)."""
 
 from __future__ import annotations
 

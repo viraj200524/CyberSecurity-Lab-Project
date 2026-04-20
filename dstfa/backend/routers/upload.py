@@ -11,7 +11,7 @@ from config import settings
 from models.request_models import RawHeadersUpload, UploadResponse
 from models.response_models import SampleListItem, SamplesListResponse
 from services.email_parser import build_minimal_eml_from_headers, parse_email
-from storage import upload_store
+from storage import store_upload
 
 router = APIRouter(tags=["upload"])
 
@@ -70,7 +70,7 @@ def _ingest_bytes(raw: bytes, filename: str) -> UploadResponse:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
 
     upload_id = str(uuid.uuid4())
-    upload_store[upload_id] = raw
+    store_upload(upload_id, raw)
 
     return UploadResponse(
         upload_id=upload_id,

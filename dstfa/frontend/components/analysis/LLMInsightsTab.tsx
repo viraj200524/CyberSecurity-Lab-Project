@@ -23,6 +23,8 @@ export type LLMInsightsShape = {
   entity_extraction?: EntityExtraction;
   attack_vectors_detected?: string[];
   threat_level?: string;
+  concept_links?: Array<{ concept?: string; unit?: string; explanation?: string; evidence_field?: string }>;
+  /** @deprecated older API responses */
   syllabus_links?: Array<{ concept?: string; unit?: string; explanation?: string; evidence_field?: string }>;
   timeline_reconstruction?: Array<{ timestamp?: string; event?: string; source?: string }>;
   chain_of_custody_log?: Record<string, unknown>;
@@ -88,7 +90,7 @@ export function LLMInsightsTab({
   if (!runLlmRequested) {
     return (
       <section className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-6 text-center text-sm text-[var(--text-muted)]">
-        <p>Turn on <strong className="text-[var(--text-primary)]">AI insights (Gemini)</strong> above, then analysis will include this tab.</p>
+        <p>Turn on <strong className="text-[var(--text-primary)]">AI insights (Groq)</strong> above, then analysis will include this tab.</p>
       </section>
     );
   }
@@ -102,11 +104,11 @@ export function LLMInsightsTab({
           animate={{ opacity: [0.6, 1, 0.6] }}
           transition={{ duration: 1.6, repeat: Infinity }}
         >
-          Analyzing with Gemini 2.0 Flash{dots}
+          Analyzing with Groq…{dots}
         </motion.p>
         <p className="max-w-md text-center text-xs text-[var(--text-muted)]">
-          Structured forensic JSON is sent to the model; results are parsed into entities, threat level, and syllabus
-          links.
+          Structured forensic JSON is sent to the model; results are parsed into entities, threat level, and crypto
+          concept links.
         </p>
       </section>
     );
@@ -245,25 +247,26 @@ export function LLMInsightsTab({
         </div>
       )}
 
-      {ins.syllabus_links && ins.syllabus_links.length > 0 && (
+      {(() => {
+        const links =
+          ins.concept_links && ins.concept_links.length > 0
+            ? ins.concept_links
+            : (ins.syllabus_links ?? []);
+        if (!links.length) return null;
+        return (
         <div>
           <h3 className="mb-3 flex items-center gap-2 font-[family-name:var(--font-space)] text-sm uppercase tracking-wide text-[var(--text-muted)]">
             <BookOpen className="h-4 w-4 text-[var(--accent-primary)]" aria-hidden />
-            Syllabus connections
+            Cryptography concepts
           </h3>
           <div className="space-y-2">
-            {ins.syllabus_links.map((link, i) => (
+            {links.map((link, i) => (
               <details
                 key={i}
                 className="group rounded-lg border border-[var(--border)] bg-[var(--bg-tertiary)] px-3 py-2"
               >
                 <summary className="cursor-pointer list-none font-medium text-[var(--text-primary)]">
                   <span className="text-[var(--accent-secondary)]">{link.concept || "Concept"}</span>
-                  {link.unit ? (
-                    <span className="ml-2 rounded bg-[var(--accent-primary)]/15 px-1.5 py-0.5 text-[10px] text-[var(--accent-primary)]">
-                      {link.unit}
-                    </span>
-                  ) : null}
                 </summary>
                 <p className="mt-2 text-sm text-[var(--text-muted)]">{link.explanation}</p>
                 {link.evidence_field ? (
@@ -275,7 +278,8 @@ export function LLMInsightsTab({
             ))}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {ins.timeline_reconstruction && ins.timeline_reconstruction.length > 0 && (
         <div>

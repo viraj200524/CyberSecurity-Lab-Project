@@ -34,7 +34,6 @@ type HashesPayload = {
 
 type Props = {
   hashes: Record<string, unknown> | HashesPayload;
-  syllabusMode?: boolean;
 };
 
 function asString(v: unknown): string {
@@ -109,7 +108,7 @@ function HashCard({
   );
 }
 
-export function HashAnalyzerTab({ hashes, syllabusMode = false }: Props) {
+export function HashAnalyzerTab({ hashes }: Props) {
   const h = hashes as HashesPayload;
   const body = h.body ?? {};
   const flags = h.vulnerability_flags ?? {};
@@ -202,7 +201,7 @@ export function HashAnalyzerTab({ hashes, syllabusMode = false }: Props) {
         <h3 className="mb-3 font-[family-name:var(--font-space)] text-sm text-[var(--text-muted)]">
           SHA-256 Merkle–Damgård (body)
         </h3>
-        <MerkleDamgardViz steps={steps} syllabusMode={syllabusMode} />
+        <MerkleDamgardViz steps={steps} />
       </div>
     </section>
   );

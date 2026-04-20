@@ -29,7 +29,7 @@ from services.email_parser import parse_email
 from services.hash_engine import build_hash_result, get_body_bytes
 from services.llm_agent import generate_forensic_explanation
 from services.trust_chain_builder import run_signature_and_trust
-from storage import analysis_store, upload_store
+from storage import analysis_store, store_analysis, upload_store
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +75,6 @@ async def _build_analysis_result(
     raw: bytes,
     *,
     run_llm: bool = False,
-    syllabus_mode: bool = False,
 ) -> AnalysisResult:
     parsed = await asyncio.to_thread(parse_email, raw)
     s = parsed.get("input_summary") or {}
@@ -132,11 +131,11 @@ async def _build_analysis_result(
     if not run_llm:
         return result
 
-    if not (settings.GEMINI_API_KEY or "").strip():
+    if not (settings.GROQ_API_KEY or "").strip():
         return result.model_copy(
             update={
                 "llm_insights": None,
-                "llm_error": "GEMINI_API_KEY is not set. Add it to backend/.env to enable AI insights.",
+                "llm_error": "GROQ_API_KEY is not set. Add it to backend/.env to enable AI insights.",
             }
         )
 
@@ -144,14 +143,10 @@ async def _build_analysis_result(
         partial = result.model_dump(mode="json", by_alias=True)
         partial.pop("llm_insights", None)
         partial.pop("llm_error", None)
-        insights: LLMInsights = await asyncio.to_thread(
-            generate_forensic_explanation,
-            partial,
-            syllabus_mode,
-        )
+        insights: LLMInsights = await asyncio.to_thread(generate_forensic_explanation, partial)
         return result.model_copy(update={"llm_insights": insights, "llm_error": None})
     except Exception as e:
-        logger.exception("Gemini forensic generation failed")
+        logger.exception("Groq forensic generation failed")
         return result.model_copy(
             update={
                 "llm_insights": None,
@@ -166,10 +161,6 @@ async def analyze_email(body: AnalyzeRequest) -> AnalysisResult:
     if raw is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown upload_id")
 
-    result = await _build_analysis_result(
-        raw,
-        run_llm=body.options.run_llm,
-        syllabus_mode=body.options.syllabus_mode,
-    )
-    analysis_store[result.analysis_id] = result.model_dump(mode="json", by_alias=True)
+    result = await _build_analysis_result(raw, run_llm=body.options.run_llm)
+    store_analysis(result.analysis_id, result.model_dump(mode="json", by_alias=True))
     return result

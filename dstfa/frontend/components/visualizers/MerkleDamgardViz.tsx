@@ -22,7 +22,6 @@ export type MerkleDamgardSteps = {
 
 type Props = {
   steps: MerkleDamgardSteps | null | undefined;
-  syllabusMode?: boolean;
 };
 
 function hexFromBlocks(blocks: MerkleDamgardBlock[]): Uint8Array {
@@ -78,7 +77,7 @@ function PaddedPreview({
   );
 }
 
-export function MerkleDamgardViz({ steps, syllabusMode = false }: Props) {
+export function MerkleDamgardViz({ steps }: Props) {
   const [accordionOpen, setAccordionOpen] = useState(false);
 
   const padded = useMemo(() => (steps?.blocks?.length ? hexFromBlocks(steps.blocks) : null), [steps]);
@@ -98,8 +97,8 @@ export function MerkleDamgardViz({ steps, syllabusMode = false }: Props) {
     origBytes > 0 ? ` (${origBytes} UTF-8 code units if body was stored as UTF-8 text)` : "";
 
   return (
-    <div className="relative flex gap-0 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-tertiary)]">
-      <div className="min-w-0 flex-1 p-4">
+    <div className="relative overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-tertiary)]">
+      <div className="min-w-0 p-4">
         <details
           open={accordionOpen}
           onToggle={(e) => setAccordionOpen(e.currentTarget.open)}
@@ -245,17 +244,6 @@ export function MerkleDamgardViz({ steps, syllabusMode = false }: Props) {
           </div>
         </details>
       </div>
-
-      {syllabusMode ? (
-        <aside
-          className="hidden w-10 shrink-0 border-l border-[var(--accent-primary)] bg-[var(--bg-primary)] shadow-[inset_0_0_12px_rgba(0,212,255,0.08)] sm:flex sm:items-center sm:justify-center sm:px-1"
-          aria-label="Syllabus context"
-        >
-          <span className="select-none font-[family-name:var(--font-space)] text-[9px] font-semibold uppercase leading-tight tracking-widest text-[var(--accent-primary)] [writing-mode:vertical-rl]">
-            Unit 4 — Merkle-Damgård Construction
-          </span>
-        </aside>
-      ) : null}
     </div>
   );
 }

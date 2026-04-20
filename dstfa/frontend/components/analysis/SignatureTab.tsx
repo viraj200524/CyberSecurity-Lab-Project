@@ -222,10 +222,9 @@ export function SignatureTab({ digitalSignatures }: SignatureTabProps) {
                         className="h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-180"
                         aria-hidden
                       />
-                      Unit 6 — DSA signature material (r, s)
+                      DSA signature material (r, s)
                     </span>
                   </summary>
-                  <p className="mt-2 text-[10px] uppercase tracking-wide text-[var(--text-muted)]">Syllabus</p>
                   <pre className="mt-1 max-h-40 overflow-auto rounded bg-[var(--terminal-bg)] p-2 text-[10px] text-[var(--terminal-text)]">
                     r = 0x{pgpText.dsa.r}
                     {"\n"}

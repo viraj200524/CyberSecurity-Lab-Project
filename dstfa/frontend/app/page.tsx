@@ -27,8 +27,8 @@ export default function Home() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[var(--bg-primary)] text-[var(--text-primary)]">
-      <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-12 lg:flex-row lg:items-start lg:justify-between">
+    <div className="dstfa-hex-bg relative min-h-screen overflow-hidden bg-[var(--bg-primary)] text-[var(--text-primary)]">
+      <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-10 px-6 py-12 lg:flex-row lg:items-start lg:justify-between">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -44,7 +44,7 @@ export default function Home() {
           <p className="text-base leading-relaxed text-[var(--text-muted)]">
             Upload a raw <code className="text-[var(--accent-primary)]">.eml</code> or Outlook{" "}
             <code className="text-[var(--accent-primary)]">.msg</code>, or paste headers. Phase 1
-            surfaces parsed headers, Received chain, and spoofing hints aligned with your syllabus.
+            surfaces parsed headers, Received chain, and spoofing hints for quick triage.
           </p>
           <ul className="space-y-2 text-sm text-[var(--text-muted)]">
             <li className="flex gap-2">
@@ -91,7 +91,7 @@ export default function Home() {
         </motion.div>
       </div>
 
-      <section className="mx-auto max-w-6xl px-6 pb-16">
+      <section className="relative z-10 mx-auto max-w-6xl px-6 pb-16">
         <h2 className="mb-4 font-[family-name:var(--font-space)] text-lg text-[var(--text-muted)]">Sample gallery</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {samples.map((s) => (

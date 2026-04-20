@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, BookOpen, CheckCircle2, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 
 import { TrustChainDiagram } from "@/components/visualizers/TrustChainDiagram";
 
@@ -47,19 +47,7 @@ export function TrustChainTab({ trustChain }: TrustChainTabProps) {
         )}
       </div>
 
-      <div className="flex flex-col gap-6 lg:flex-row">
-        <aside className="shrink-0 rounded-lg border border-[var(--border)] bg-[var(--bg-tertiary)] p-3 lg:w-52">
-          <div className="flex items-start gap-2">
-            <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent-primary)]" aria-hidden />
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--accent-primary)]">Syllabus</p>
-              <p className="mt-1 text-xs leading-snug text-[var(--text-muted)]">
-                Unit 6 — Chain of trust / PKI: how X.509, S/MIME, DKIM, SPF, and DMARC relate to the message.
-              </p>
-            </div>
-          </div>
-        </aside>
-
+      <div className="flex flex-col gap-6">
         <div className="min-w-0 flex-1 space-y-4">
           <TrustChainDiagram chart={diagram} />
 

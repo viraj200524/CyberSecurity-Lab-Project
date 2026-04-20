@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import email.policy
+import logging
 import os
 import re
 import tempfile
@@ -262,7 +263,14 @@ def _parse_eml(raw: bytes) -> dict[str, Any]:
     try:
         import mailparser
 
-        mp = mailparser.parse_from_bytes(raw)
+        # mailparser warns on application/pgp-signature parts; we still parse via stdlib ``email``.
+        _mplog = logging.getLogger("mailparser.mailparser")
+        _prev_level = _mplog.level
+        _mplog.setLevel(logging.ERROR)
+        try:
+            mp = mailparser.parse_from_bytes(raw)
+        finally:
+            _mplog.setLevel(_prev_level)
         if mp.text_plain:
             mp_plain = str(mp.text_plain).strip()
         for a in mp.attachments or []:
