@@ -1,0 +1,21 @@
+From: alice@pgp.example
+To: bob@pgp.example
+Subject: PGP-signed sample (synthetic)
+Date: Tue, 14 Apr 2026 12:00:00 +0000
+Message-ID: <pgp-sample@dstfa.local>
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/pgp-signature"; boundary="dstfa-boundary"
+
+--dstfa-boundary
+Content-Type: text/plain; charset=utf-8
+
+This body stands in for a signed message. Real verification comes in a later phase.
+
+--dstfa-boundary
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+(synthetic placeholder — not a valid OpenPGP packet)
+-----END PGP SIGNATURE-----
+
+--dstfa-boundary--

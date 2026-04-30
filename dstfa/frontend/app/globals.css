@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+:root {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #0f1629;
+  --bg-tertiary: #1a2340;
+  --accent-primary: #00d4ff;
+  --accent-secondary: #7b61ff;
+  --success: #00ff88;
+  --warning: #ffb800;
+  --danger: #ff3860;
+  --text-primary: #e8eaf0;
+  --text-muted: #6b7a99;
+  --border: #1e2d4a;
+  --terminal-bg: #060b15;
+  --terminal-text: #00ff88;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.12;
+  background-image: linear-gradient(90deg, rgba(0, 212, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(rgba(0, 212, 255, 0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+  z-index: 0;
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+details > summary {
+  list-style: none;
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+@theme inline {
+  --font-sans: var(--font-ibm);
+  --font-mono: var(--font-jetbrains);
+}
+
+/* Phase 7 — keyboard focus visibility */
+button:focus-visible,
+a:focus-visible,
+[role="tab"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* Screen-reader-only (skip link) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.sr-only:focus {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 50;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Landing hex motif (Phase 7.7) */
+.dstfa-hex-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.06;
+  background-image: repeating-linear-gradient(
+      120deg,
+      rgba(0, 212, 255, 0.12) 0 1px,
+      transparent 1px 18px,
+      rgba(123, 97, 255, 0.1) 18px 19px,
+      transparent 19px 36px
+    ),
+    repeating-linear-gradient(-120deg, rgba(0, 212, 255, 0.08) 0 1px, transparent 1px 22px);
+  z-index: 0;
+}
