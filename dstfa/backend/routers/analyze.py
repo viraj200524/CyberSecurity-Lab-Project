@@ -105,6 +105,14 @@ async def _build_analysis_result(
     a_task = asyncio.to_thread(_safe_run_auth, raw, parsed)
     hdict, adict = await asyncio.gather(h_task, a_task)
 
+    # sha1_detected should reflect DKIM algorithm, not just body presence
+    dkim_algo = str((adict.get("dkim") or {}).get("algorithm", "") or "").lower()
+    dkim_uses_sha1 = "sha1" in dkim_algo
+    vflags = hdict.get("vulnerability_flags")
+    if isinstance(vflags, dict):
+        vflags["sha1_detected"] = dkim_uses_sha1
+        vflags["length_extension_risk"] = bool(vflags.get("md5_detected")) or dkim_uses_sha1
+
     hashes = HashResult.model_validate(hdict)
     authentication = AuthResult.model_validate(adict)
 

@@ -149,7 +149,7 @@ def check_spf(raw_email: bytes, parsed_summary: dict[str, Any]) -> dict[str, Any
             "explanation": "No MAIL FROM / Return-Path / From address available; SPF check skipped.",
         }
 
-    timeout = max(1, min(20, 10))
+    timeout = max(1, min(20, int(settings.SANDBOX_TIMEOUT_SECONDS)))
     try:
         with _pyspf_dns_resolver_from_settings(timeout):
             res, expl = spf.check2(
